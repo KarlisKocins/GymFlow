@@ -34,11 +34,11 @@ export default function RoutinesPage() {
           </div>
           <div className="flex gap-4">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/dashboard')}
               className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 bg-white rounded-lg shadow hover:shadow-md transition-all"
             >
               <ArrowLeftIcon className="h-5 w-5" />
-              Back to Home
+              Back to Dashboard
             </button>
             <Link
               href="/routines/create"

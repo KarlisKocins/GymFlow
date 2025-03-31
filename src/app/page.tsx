@@ -1,82 +1,157 @@
 'use client'
 
 import Link from 'next/link'
-import {
-  ClipboardDocumentListIcon,
-  ChartBarIcon,
-  PlayIcon,
-} from '@heroicons/react/24/outline'
+import { useState } from 'react'
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 
 export default function HomePage() {
+  // Example data for the progress chart
+  const months = ['months', 'jan', 'feb', 'mar', 'apr']
+  
+  // Current month for calendar
+  const [currentMonth] = useState('April 2024')
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to GymFlow</h1>
-          <p className="text-lg text-gray-600">
-            Track your workouts, follow routines, and achieve your fitness goals
-          </p>
+    <div className="min-h-screen bg-white">
+      {/* Header with logo and auth buttons */}
+      <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+        <h1 className="text-3xl font-bold">GymFlow</h1>
+        <div className="flex gap-2">
+          <Link href="/dashboard" className="px-4 py-2 rounded border border-gray-300 font-medium">
+            Log in
+          </Link>
+          <button className="px-4 py-2 rounded bg-blue-600 text-white font-medium">
+            Sign up
+          </button>
         </div>
+      </header>
 
-        {/* Main Actions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {/* Start Workout */}
-          <Link
-            href="/workout"
-            className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-6 flex flex-col items-center text-center group"
-          >
-            <div className="bg-blue-100 rounded-full p-4 mb-4 group-hover:bg-blue-200 transition-colors">
-              <PlayIcon className="h-8 w-8 text-blue-600" />
-            </div>
-            <h2 className="text-xl font-semibold mb-2">Start Workout</h2>
-            <p className="text-gray-600">Begin a new workout session</p>
-          </Link>
+      {/* Hero section */}
+      <section className="text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 className="text-5xl font-bold mb-4">Track your workouts with ease</h2>
+        <p className="text-xl text-gray-700 mb-8">
+          An easy-to-use gym workout tracker to log your exercises and monitor your progress.
+        </p>
+        <button className="px-8 py-4 bg-blue-600 text-white text-xl font-medium rounded-md">
+          Get Started
+        </button>
+      </section>
 
-          {/* Routines */}
-          <Link
-            href="/routines"
-            className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-6 flex flex-col items-center text-center group"
-          >
-            <div className="bg-green-100 rounded-full p-4 mb-4 group-hover:bg-green-200 transition-colors">
-              <ClipboardDocumentListIcon className="h-8 w-8 text-green-600" />
+      {/* Main features section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Log Workouts */}
+        <div>
+          <h3 className="text-2xl font-bold mb-4">Log Workouts</h3>
+          <div className="bg-white rounded-md">
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Exercise</label>
+              <div className="relative">
+                <select className="w-full p-2 border border-gray-300 rounded appearance-none">
+                  <option>Bench Press</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <svg className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M7 7l3-3 3 3m0 6l-3 3-3-3" />
+                  </svg>
+                </div>
+              </div>
             </div>
-            <h2 className="text-xl font-semibold mb-2">Routines</h2>
-            <p className="text-gray-600">Browse and create workout routines</p>
-          </Link>
-
-          {/* Progress */}
-          <Link
-            href="/progress"
-            className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-6 flex flex-col items-center text-center group"
-          >
-            <div className="bg-purple-100 rounded-full p-4 mb-4 group-hover:bg-purple-200 transition-colors">
-              <ChartBarIcon className="h-8 w-8 text-purple-600" />
+            
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-700 mb-2">Sets</label>
+                <input
+                  type="number"
+                  className="w-full p-2 border border-gray-300 rounded"
+                  defaultValue="3"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-2">Reps</label>
+                <input
+                  type="number"
+                  className="w-full p-2 border border-gray-300 rounded"
+                  defaultValue="10"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-2">Weight</label>
+                <input
+                  type="number"
+                  className="w-full p-2 border border-gray-300 rounded"
+                  defaultValue="60"
+                />
+              </div>
             </div>
-            <h2 className="text-xl font-semibold mb-2">Progress</h2>
-            <p className="text-gray-600">Track your fitness journey</p>
-          </Link>
+            
+            <button className="w-full py-4 bg-blue-600 text-white font-medium rounded">
+              Add Workout
+            </button>
+          </div>
         </div>
-
-        {/* Features Section */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-center mb-8">Why Choose GymFlow?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="font-semibold mb-2">Smart Workout Tracking</h3>
-              <p className="text-gray-600">Automatically track sets, reps, and rest times with our intuitive interface</p>
+        
+        {/* View Progress */}
+        <div>
+          <h3 className="text-2xl font-bold mb-4">View Progress</h3>
+          <div className="bg-white rounded-md">
+            <h4 className="font-medium mb-2">Progress Over Time</h4>
+            <div className="h-48 relative overflow-hidden">
+              {/* Simple line chart */}
+              <svg className="w-full h-full" viewBox="0 0 100 50">
+                <path
+                  d="M0,50 L20,45 L40,35 L60,30 L80,20 L100,5"
+                  fill="none"
+                  stroke="#2563eb"
+                  strokeWidth="2"
+                />
+              </svg>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="font-semibold mb-2">Pre-made Routines</h3>
-              <p className="text-gray-600">Access professionally designed workout routines or create your own</p>
-            </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="font-semibold mb-2">Progress Analytics</h3>
-              <p className="text-gray-600">Visualize your progress with detailed charts and statistics</p>
+            <div className="flex justify-between mt-2 text-sm text-gray-500">
+              {months.map((month, i) => (
+                <span key={i}>{month}</span>
+              ))}
             </div>
           </div>
         </div>
-      </div>
+        
+        {/* Build Routine */}
+        <div>
+          <h3 className="text-2xl font-bold mb-4">Build Routine</h3>
+          <div className="bg-white rounded-md p-4">
+            <div className="flex items-center justify-between mb-4">
+              <button className="text-gray-400">
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+              <h4 className="font-medium">{currentMonth}</h4>
+              <button className="text-gray-400">
+                <ChevronRightIcon className="h-5 w-5" />
+              </button>
+            </div>
+            
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-1 text-center">
+              {/* Days of week */}
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                <div key={i} className="py-1 font-medium">{day}</div>
+              ))}
+              
+              {/* Calendar days */}
+              {[...Array(31)].map((_, i) => {
+                const day = i + 1;
+                const isToday = day === 24;
+                return (
+                  <div 
+                    key={i} 
+                    className={`py-1 ${isToday ? 'bg-blue-600 text-white rounded-full' : ''}`}
+                  >
+                    {day}
+                  </div>
+                );
+              }).filter((_, i) => i < 30)} {/* Only show days in April */}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

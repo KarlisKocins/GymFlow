@@ -112,10 +112,10 @@ src/
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
 ## 🙏 Acknowledgments
 
 - [Next.js](https://nextjs.org/) ⚡
 - [Tailwind CSS](https://tailwindcss.com/) 🎨
 - [Heroicons](https://heroicons.com/) 🎯
 - [Chart.js](https://www.chartjs.org/) 📊
+
