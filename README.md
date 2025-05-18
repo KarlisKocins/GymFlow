@@ -54,7 +54,7 @@ A modern, intuitive workout tracking application built with Next.js, TypeScript,
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/gymflow.git
+git clone https://github.com/KarlisKocins/GymFlow
 cd gymflow
 ```
 
@@ -75,7 +75,7 @@ yarn install
 
 4. Configure environment variables:
    
-Create a `.env.local` file in the root directory with the following variables:
+Create a `.env` file in the root directory with the following variables:
 ```
 DATABASE_URL=postgresql://username:password@localhost:5432/gymapp
 ```
