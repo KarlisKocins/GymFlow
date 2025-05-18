@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWorkoutStore } from '@/lib/store/workoutStore'
-import type { Exercise, WorkoutExercise } from '@/types'
+import { useExerciseStore } from '@/lib/store/exerciseStore'
+import type { Exercise } from '@/types'
 import { format } from 'date-fns'
 import { 
   PlusIcon, 
@@ -15,6 +16,14 @@ import {
   ArrowUturnLeftIcon
 } from '@heroicons/react/24/outline'
 
+// Define a mapping type between DB exercise and Exercise type used in this component
+interface DBExercise {
+  id: string;
+  name: string;
+  muscleGroup: string;
+  description?: string;
+}
+
 export default function WorkoutTracker() {
   const { 
     currentWorkout, 
@@ -28,10 +37,15 @@ export default function WorkoutTracker() {
     updateExerciseRestTime,
     stopTimer
   } = useWorkoutStore()
+  const { exercises, exercisesByGroup, fetchExercises, isLoading } = useExerciseStore()
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [collapsedExercises, setCollapsedExercises] = useState<string[]>([])
   const [editingRestTime, setEditingRestTime] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchExercises()
+  }, [fetchExercises])
 
   const getPreviousWorkoutData = (exerciseId: string) => {
     // Find the most recent workout that included this exercise
@@ -80,6 +94,16 @@ export default function WorkoutTracker() {
     setSelectedExercise(null)
   }
 
+  // Convert DB exercise to our component's Exercise type
+  const mapToComponentExercise = (dbExercise: DBExercise): Exercise => {
+    return {
+      id: dbExercise.id,
+      name: dbExercise.name,
+      category: dbExercise.muscleGroup,
+      targetMuscles: [dbExercise.muscleGroup], // Using muscleGroup as targetMuscle as a simplification
+    };
+  };
+
   const handleSetComplete = (exerciseId: string, setId: string, restTime: number) => {
     updateSet(exerciseId, setId, { completed: true })
     startTimer(exerciseId, setId, restTime)
@@ -120,113 +144,36 @@ export default function WorkoutTracker() {
             className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={selectedExercise?.id || ''}
             onChange={(e) => {
-              const exercise = {
-                id: e.target.value,
-                name: e.target.options[e.target.selectedIndex].text,
-                category: 'strength',
-                targetMuscles: ['chest'],
+              const exerciseId = e.target.value;
+              const foundExercise = exercises.find(ex => ex.id === exerciseId);
+              if (foundExercise) {
+                setSelectedExercise(mapToComponentExercise(foundExercise as DBExercise));
               }
-              setSelectedExercise(exercise as Exercise)
             }}
+            disabled={isLoading}
           >
             <option value="">Select an exercise</option>
-            {/* Chest */}
-            <optgroup label="Chest">
-              <option value="bench-press">Bench Press</option>
-              <option value="incline-bench-press">Incline Bench Press</option>
-              <option value="decline-bench-press">Decline Bench Press</option>
-              <option value="dumbbell-press">Dumbbell Press</option>
-              <option value="incline-dumbbell-press">Incline Dumbbell Press</option>
-              <option value="chest-dips">Chest Dips</option>
-              <option value="cable-flyes">Cable Flyes</option>
-              <option value="dumbbell-flyes">Dumbbell Flyes</option>
-              <option value="push-ups">Push-ups</option>
-            </optgroup>
-
-            {/* Back */}
-            <optgroup label="Back">
-              <option value="pull-ups">Pull-ups</option>
-              <option value="lat-pulldowns">Lat Pulldowns</option>
-              <option value="barbell-rows">Barbell Rows</option>
-              <option value="dumbbell-rows">Dumbbell Rows</option>
-              <option value="t-bar-rows">T-Bar Rows</option>
-              <option value="seated-cable-rows">Seated Cable Rows</option>
-              <option value="face-pulls">Face Pulls</option>
-              <option value="deadlift">Deadlift</option>
-            </optgroup>
-
-            {/* Legs */}
-            <optgroup label="Legs">
-              <option value="squats">Squats</option>
-              <option value="leg-press">Leg Press</option>
-              <option value="romanian-deadlifts">Romanian Deadlifts</option>
-              <option value="leg-extensions">Leg Extensions</option>
-              <option value="leg-curls">Leg Curls</option>
-              <option value="calf-raises">Calf Raises</option>
-              <option value="lunges">Lunges</option>
-              <option value="hack-squats">Hack Squats</option>
-            </optgroup>
-
-            {/* Shoulders */}
-            <optgroup label="Shoulders">
-              <option value="overhead-press">Overhead Press</option>
-              <option value="dumbbell-shoulder-press">Dumbbell Shoulder Press</option>
-              <option value="lateral-raises">Lateral Raises</option>
-              <option value="front-raises">Front Raises</option>
-              <option value="reverse-flyes">Reverse Flyes</option>
-              <option value="shrugs">Shrugs</option>
-              <option value="upright-rows">Upright Rows</option>
-            </optgroup>
-
-            {/* Arms */}
-            <optgroup label="Arms">
-              <option value="bicep-curls">Bicep Curls</option>
-              <option value="hammer-curls">Hammer Curls</option>
-              <option value="preacher-curls">Preacher Curls</option>
-              <option value="tricep-pushdowns">Tricep Pushdowns</option>
-              <option value="skull-crushers">Skull Crushers</option>
-              <option value="tricep-extensions">Tricep Extensions</option>
-              <option value="concentration-curls">Concentration Curls</option>
-            </optgroup>
-
-            {/* Core */}
-            <optgroup label="Core">
-              <option value="crunches">Crunches</option>
-              <option value="leg-raises">Leg Raises</option>
-              <option value="planks">Planks</option>
-              <option value="russian-twists">Russian Twists</option>
-              <option value="ab-wheel">Ab Wheel</option>
-              <option value="hanging-leg-raises">Hanging Leg Raises</option>
-              <option value="wood-chops">Wood Chops</option>
-            </optgroup>
-
-            {/* Olympic Lifts */}
-            <optgroup label="Olympic Lifts">
-              <option value="clean-and-jerk">Clean and Jerk</option>
-              <option value="power-clean">Power Clean</option>
-              <option value="snatch">Snatch</option>
-              <option value="clean-pull">Clean Pull</option>
-              <option value="snatch-pull">Snatch Pull</option>
-            </optgroup>
-
-            {/* Cardio */}
-            <optgroup label="Cardio">
-              <option value="treadmill">Treadmill</option>
-              <option value="stationary-bike">Stationary Bike</option>
-              <option value="rowing-machine">Rowing Machine</option>
-              <option value="elliptical">Elliptical</option>
-              <option value="jump-rope">Jump Rope</option>
-              <option value="burpees">Burpees</option>
-            </optgroup>
+            {Object.keys(exercisesByGroup).sort().map((groupName) => (
+              <optgroup key={groupName} label={groupName}>
+                {exercisesByGroup[groupName].map((exercise) => (
+                  <option key={exercise.id} value={exercise.id}>
+                    {exercise.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
           </select>
           <button
             onClick={handleAddExercise}
-            disabled={!selectedExercise}
+            disabled={!selectedExercise || isLoading}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             <PlusIcon className="h-5 w-5" />
           </button>
         </div>
+        {isLoading && (
+          <div className="mt-2 text-sm text-gray-500">Loading exercises...</div>
+        )}
       </div>
 
       {/* Exercise List */}
@@ -236,6 +183,7 @@ export default function WorkoutTracker() {
           const completedSets = exercise.sets.filter((set) => set.completed).length
           const totalSets = exercise.sets.length
           const previousData = getPreviousWorkoutData(exercise.exerciseId)
+          const exerciseDetails = exercises.find(ex => ex.id === exercise.exerciseId) as DBExercise | undefined
 
           return (
             <div key={exercise.id} className="bg-white rounded-lg shadow overflow-hidden">
@@ -255,10 +203,15 @@ export default function WorkoutTracker() {
                     </button>
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">
-                        {exercise.exerciseId}
+                        {exerciseDetails ? exerciseDetails.name : exercise.exerciseId}
                       </h3>
                       <p className="text-sm text-gray-500">
                         {completedSets} of {totalSets} sets completed
+                        {exerciseDetails?.muscleGroup && (
+                          <span className="ml-2 text-xs text-gray-400">
+                            {exerciseDetails.muscleGroup}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>

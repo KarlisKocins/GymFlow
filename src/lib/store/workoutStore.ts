@@ -10,7 +10,9 @@ interface WorkoutStore {
     setId: string
     remainingTime: number
   } | null
+  isLoading: boolean
   // Actions
+  fetchWorkoutHistory: () => Promise<void>
   startWorkout: (name: string) => void
   startWorkoutFromRoutine: (routine: WorkoutRoutine) => void
   addExercise: (exercise: Omit<WorkoutExercise, 'id'>) => void
@@ -21,7 +23,8 @@ interface WorkoutStore {
   updateExerciseRestTime: (exerciseId: string, restTime: number) => void
   startTimer: (exerciseId: string, setId: string, duration: number) => void
   stopTimer: () => void
-  completeWorkout: () => void
+  completeWorkout: () => Promise<void>
+  deleteWorkout: (id: string) => Promise<void>
 }
 
 export const useWorkoutStore = create<WorkoutStore>()(
@@ -30,6 +33,20 @@ export const useWorkoutStore = create<WorkoutStore>()(
       currentWorkout: null,
       workoutHistory: [],
       activeTimer: null,
+      isLoading: false,
+      
+      fetchWorkoutHistory: async () => {
+        set({ isLoading: true })
+        try {
+          const response = await fetch('/api/workouts')
+          if (!response.ok) throw new Error('Failed to fetch workout history')
+          const data = await response.json()
+          set({ workoutHistory: data, isLoading: false })
+        } catch (error) {
+          console.error('Error fetching workout history:', error)
+          set({ isLoading: false })
+        }
+      },
 
       startWorkout: (name: string) => {
         set({
@@ -209,7 +226,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
         set({ activeTimer: null })
       },
 
-      completeWorkout: () => {
+      completeWorkout: async () => {
         const currentWorkout = get().currentWorkout
         if (!currentWorkout) return
 
@@ -221,11 +238,50 @@ export const useWorkoutStore = create<WorkoutStore>()(
           ),
         }
 
-        set((state) => ({
-          currentWorkout: null,
-          workoutHistory: [...state.workoutHistory, completedWorkout],
-        }))
+        try {
+          // Save to the database
+          const response = await fetch('/api/workouts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(completedWorkout),
+          })
+
+          if (!response.ok) throw new Error('Failed to save workout')
+          const savedWorkout = await response.json()
+
+          // Update local state
+          set((state) => ({
+            currentWorkout: null,
+            workoutHistory: [savedWorkout, ...state.workoutHistory],
+          }))
+        } catch (error) {
+          console.error('Error saving workout:', error)
+          // Even if server save fails, update local state
+          set((state) => ({
+            currentWorkout: null,
+            workoutHistory: [completedWorkout, ...state.workoutHistory],
+          }))
+        }
       },
+      
+      deleteWorkout: async (id) => {
+        try {
+          const response = await fetch(`/api/workouts/${id}`, {
+            method: 'DELETE',
+          })
+
+          if (!response.ok) throw new Error('Failed to delete workout')
+          
+          // Update local state
+          set((state) => ({
+            workoutHistory: state.workoutHistory.filter(workout => workout.id !== id)
+          }))
+        } catch (error) {
+          console.error('Error deleting workout:', error)
+        }
+      }
     }),
     {
       name: 'workout-storage',

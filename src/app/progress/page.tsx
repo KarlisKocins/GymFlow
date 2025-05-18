@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useWorkoutStore } from '@/lib/store/workoutStore'
 import WorkoutCharts from '@/components/progress/WorkoutCharts'
@@ -11,13 +11,19 @@ import {
   CalendarIcon,
   TrophyIcon,
   ArrowLeftIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline'
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns'
 
 export default function ProgressPage() {
   const router = useRouter()
-  const { workoutHistory } = useWorkoutStore()
+  const { workoutHistory, fetchWorkoutHistory, isLoading, deleteWorkout } = useWorkoutStore()
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'all'>('week')
+
+  // Fetch workout history when the component mounts
+  useEffect(() => {
+    fetchWorkoutHistory()
+  }, [fetchWorkoutHistory])
 
   // Calculate statistics
   const calculateStats = () => {
@@ -77,6 +83,13 @@ export default function ProgressPage() {
 
   const stats = calculateStats()
 
+  // Handle workout deletion
+  const handleDeleteWorkout = async (id: string) => {
+    if (confirm('Are you sure you want to delete this workout?')) {
+      await deleteWorkout(id)
+    }
+  }
+
   return (
     <div className="py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -114,91 +127,113 @@ export default function ProgressPage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <ChartBarIcon className="h-6 w-6 text-blue-500" />
-              <h3 className="text-lg font-medium">Total Workouts</h3>
-            </div>
-            <p className="text-3xl font-bold">{stats.totalWorkouts}</p>
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex justify-center my-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
+        )}
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <ClockIcon className="h-6 w-6 text-green-500" />
-              <h3 className="text-lg font-medium">Total Time</h3>
-            </div>
-            <p className="text-3xl font-bold">{Math.round(stats.totalDuration / 60)}h {stats.totalDuration % 60}m</p>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <FireIcon className="h-6 w-6 text-orange-500" />
-              <h3 className="text-lg font-medium">Current Streak</h3>
-            </div>
-            <p className="text-3xl font-bold">{stats.currentStreak} days</p>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <TrophyIcon className="h-6 w-6 text-yellow-500" />
-              <h3 className="text-lg font-medium">Best Streak</h3>
-            </div>
-            <p className="text-3xl font-bold">{stats.maxStreak} days</p>
-          </div>
-        </div>
-
-        {/* Charts */}
-        <WorkoutCharts workouts={workoutHistory} selectedPeriod={selectedPeriod} />
-
-        {/* Workout History */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-xl font-semibold">Workout History</h2>
-          </div>
-          <div className="divide-y">
-            {workoutHistory.length === 0 ? (
-              <div className="px-6 py-8 text-center text-gray-500">
-                No workouts recorded yet. Start your fitness journey today!
+        {!isLoading && (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <ChartBarIcon className="h-6 w-6 text-blue-500" />
+                  <h3 className="text-lg font-medium">Total Workouts</h3>
+                </div>
+                <p className="text-3xl font-bold">{stats.totalWorkouts}</p>
               </div>
-            ) : (
-              workoutHistory
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((workout) => (
-                  <div key={workout.id} className="px-6 py-4 hover:bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <CalendarIcon className="h-5 w-5 text-gray-400" />
-                        <h3 className="font-medium">{workout.name}</h3>
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        {format(new Date(workout.date), 'MMM d, yyyy • h:mm a')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-6 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <ClockIcon className="h-4 w-4" />
-                        {workout.duration} min
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <ChartBarIcon className="h-4 w-4" />
-                        {workout.exercises.length} exercises
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FireIcon className="h-4 w-4" />
-                        {workout.exercises.reduce(
-                          (acc, exercise) => acc + exercise.sets.filter((set) => set.completed).length,
-                          0
-                        )}{' '}
-                        sets completed
-                      </div>
-                    </div>
-                  </div>
-                ))
+
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <ClockIcon className="h-6 w-6 text-green-500" />
+                  <h3 className="text-lg font-medium">Total Time</h3>
+                </div>
+                <p className="text-3xl font-bold">{Math.round(stats.totalDuration / 60)}h {stats.totalDuration % 60}m</p>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <FireIcon className="h-6 w-6 text-orange-500" />
+                  <h3 className="text-lg font-medium">Current Streak</h3>
+                </div>
+                <p className="text-3xl font-bold">{stats.currentStreak} days</p>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <TrophyIcon className="h-6 w-6 text-yellow-500" />
+                  <h3 className="text-lg font-medium">Best Streak</h3>
+                </div>
+                <p className="text-3xl font-bold">{stats.maxStreak} days</p>
+              </div>
+            </div>
+
+            {/* Charts */}
+            {workoutHistory.length > 0 && (
+              <WorkoutCharts workouts={workoutHistory} selectedPeriod={selectedPeriod} />
             )}
-          </div>
-        </div>
+
+            {/* Workout History */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="px-6 py-4 border-b">
+                <h2 className="text-xl font-semibold">Workout History</h2>
+              </div>
+              <div className="divide-y">
+                {workoutHistory.length === 0 ? (
+                  <div className="px-6 py-8 text-center text-gray-500">
+                    No workouts recorded yet. Start your fitness journey today!
+                  </div>
+                ) : (
+                  workoutHistory
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .map((workout) => (
+                      <div key={workout.id} className="px-6 py-4 hover:bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <CalendarIcon className="h-5 w-5 text-gray-400" />
+                            <h3 className="font-medium">{workout.name}</h3>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="text-sm text-gray-500">
+                              {format(new Date(workout.date), 'MMM d, yyyy • h:mm a')}
+                            </span>
+                            <button 
+                              onClick={() => handleDeleteWorkout(workout.id)}
+                              className="text-gray-400 hover:text-red-500"
+                              title="Delete workout"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-6 text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <ClockIcon className="h-4 w-4" />
+                            {workout.duration} min
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <ChartBarIcon className="h-4 w-4" />
+                            {workout.exercises.length} exercises
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <FireIcon className="h-4 w-4" />
+                            {workout.exercises.reduce(
+                              (acc, exercise) => acc + exercise.sets.filter((set) => set.completed).length,
+                              0
+                            )}{' '}
+                            sets completed
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

@@ -7,7 +7,6 @@ import WorkoutTracker from '@/components/workout/WorkoutTracker'
 import WorkoutTimer from '@/components/workout/WorkoutTimer'
 import { 
   ClockIcon, 
-  XMarkIcon,
   CheckIcon,
   ExclamationCircleIcon 
 } from '@heroicons/react/24/outline'

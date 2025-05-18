@@ -1,34 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRoutineStore } from '@/lib/store/routineStore'
+import { useExerciseStore } from '@/lib/store/exerciseStore'
 import type { RoutineExercise } from '@/types'
 import { PlusIcon, XMarkIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 
 export default function CreateRoutinePage() {
   const router = useRouter()
   const { addRoutine } = useRoutineStore()
+  const { exercises, exercisesByGroup, fetchExercises, isLoading } = useExerciseStore()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner')
   const [category, setCategory] = useState('strength')
   const [estimatedDuration, setEstimatedDuration] = useState(45)
-  const [targetMuscleGroups, setTargetMuscleGroups] = useState<string[]>([])
-  const [exercises, setExercises] = useState<RoutineExercise[]>([])
+  const [targetMuscleGroups] = useState<string[]>([])
+  const [routineExercises, setRoutineExercises] = useState<RoutineExercise[]>([])
   const [selectedExercise, setSelectedExercise] = useState('')
+
+  // Fetch exercises on component mount
+  useEffect(() => {
+    fetchExercises()
+  }, [fetchExercises])
 
   const handleAddExercise = () => {
     if (!selectedExercise) return
 
-    const select = document.querySelector<HTMLSelectElement>('select[name="exercise-select"]')
-    const exerciseName = select?.selectedOptions[0]?.textContent || selectedExercise
+    const exercise = exercises.find(ex => ex.id === selectedExercise)
+    if (!exercise) return
 
-    setExercises([
-      ...exercises,
+    setRoutineExercises([
+      ...routineExercises,
       {
         exerciseId: selectedExercise,
-        name: exerciseName,
+        name: exercise.name,
         sets: 3,
         reps: 10,
         restTime: 90,
@@ -38,12 +45,12 @@ export default function CreateRoutinePage() {
   }
 
   const handleRemoveExercise = (index: number) => {
-    setExercises(exercises.filter((_, i) => i !== index))
+    setRoutineExercises(routineExercises.filter((_, i) => i !== index))
   }
 
   const handleExerciseChange = (index: number, updates: Partial<RoutineExercise>) => {
-    setExercises(
-      exercises.map((exercise, i) =>
+    setRoutineExercises(
+      routineExercises.map((exercise, i) =>
         i === index ? { ...exercise, ...updates } : exercise
       )
     )
@@ -51,7 +58,7 @@ export default function CreateRoutinePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || exercises.length === 0) return
+    if (!name || routineExercises.length === 0) return
 
     addRoutine({
       name,
@@ -60,11 +67,21 @@ export default function CreateRoutinePage() {
       category,
       estimatedDuration,
       targetMuscleGroups,
-      exercises,
+      exercises: routineExercises,
       isCustom: true,
     })
 
     router.push('/routines')
+  }
+  
+  // Group names for readability
+  const muscleGroupNames: Record<string, string> = {
+    'chest': 'Chest',
+    'back': 'Back',
+    'legs': 'Legs',
+    'shoulders': 'Shoulders',
+    'arms': 'Arms',
+    'core': 'Core'
   }
 
   return (
@@ -121,7 +138,7 @@ export default function CreateRoutinePage() {
                   <select
                     id="difficulty"
                     value={difficulty}
-                    onChange={(e) => setDifficulty(e.target.value as any)}
+                    onChange={(e) => setDifficulty(e.target.value as 'beginner' | 'intermediate' | 'advanced')}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   >
                     <option value="beginner">Beginner</option>
@@ -168,69 +185,32 @@ export default function CreateRoutinePage() {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Exercises</h2>
                 <div className="flex gap-4 items-center">
-                  <select
-                    name="exercise-select"
-                    value={selectedExercise}
-                    onChange={(e) => setSelectedExercise(e.target.value)}
-                    className="block w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  >
-                    <option value="">Select an exercise</option>
-                    {/* Chest */}
-                    <optgroup label="Chest">
-                      <option value="bench-press">Bench Press</option>
-                      <option value="incline-bench-press">Incline Bench Press</option>
-                      <option value="decline-bench-press">Decline Bench Press</option>
-                      <option value="dumbbell-press">Dumbbell Press</option>
-                      <option value="incline-dumbbell-press">Incline Dumbbell Press</option>
-                      <option value="chest-dips">Chest Dips</option>
-                      <option value="cable-flyes">Cable Flyes</option>
-                      <option value="dumbbell-flyes">Dumbbell Flyes</option>
-                      <option value="push-ups">Push-ups</option>
-                    </optgroup>
-                    {/* Back */}
-                    <optgroup label="Back">
-                      <option value="pull-ups">Pull-ups</option>
-                      <option value="lat-pulldowns">Lat Pulldowns</option>
-                      <option value="barbell-rows">Barbell Rows</option>
-                      <option value="dumbbell-rows">Dumbbell Rows</option>
-                      <option value="face-pulls">Face Pulls</option>
-                      <option value="deadlift">Deadlift</option>
-                    </optgroup>
-                    {/* Legs */}
-                    <optgroup label="Legs">
-                      <option value="squats">Squats</option>
-                      <option value="leg-press">Leg Press</option>
-                      <option value="lunges">Lunges</option>
-                      <option value="leg-extensions">Leg Extensions</option>
-                      <option value="leg-curls">Leg Curls</option>
-                      <option value="calf-raises">Calf Raises</option>
-                    </optgroup>
-                    {/* Shoulders */}
-                    <optgroup label="Shoulders">
-                      <option value="overhead-press">Overhead Press</option>
-                      <option value="lateral-raises">Lateral Raises</option>
-                      <option value="front-raises">Front Raises</option>
-                      <option value="reverse-flyes">Reverse Flyes</option>
-                    </optgroup>
-                    {/* Arms */}
-                    <optgroup label="Arms">
-                      <option value="bicep-curls">Bicep Curls</option>
-                      <option value="hammer-curls">Hammer Curls</option>
-                      <option value="tricep-pushdowns">Tricep Pushdowns</option>
-                      <option value="skull-crushers">Skull Crushers</option>
-                    </optgroup>
-                    {/* Core */}
-                    <optgroup label="Core">
-                      <option value="crunches">Crunches</option>
-                      <option value="planks">Planks</option>
-                      <option value="russian-twists">Russian Twists</option>
-                      <option value="leg-raises">Leg Raises</option>
-                    </optgroup>
-                  </select>
+                  {isLoading ? (
+                    <div className="w-64 h-10 bg-gray-200 animate-pulse rounded-md"></div>
+                  ) : (
+                    <select
+                      name="exercise-select"
+                      value={selectedExercise}
+                      onChange={(e) => setSelectedExercise(e.target.value)}
+                      className="block w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    >
+                      <option value="">Select an exercise</option>
+                      {/* Dynamic groups from database */}
+                      {Object.keys(exercisesByGroup).sort().map(group => (
+                        <optgroup key={group} label={muscleGroupNames[group] || group}>
+                          {exercisesByGroup[group].sort((a, b) => a.name.localeCompare(b.name)).map(exercise => (
+                            <option key={exercise.id} value={exercise.id}>
+                              {exercise.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  )}
                   <button
                     type="button"
                     onClick={handleAddExercise}
-                    disabled={!selectedExercise}
+                    disabled={!selectedExercise || isLoading}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="h-5 w-5 mr-2" />
@@ -240,8 +220,8 @@ export default function CreateRoutinePage() {
               </div>
 
               <div className="space-y-6">
-                {exercises.map((exercise, index) => (
-                  <div key={exercise.exerciseId} className="bg-gray-50 rounded-lg p-6 relative">
+                {routineExercises.map((exercise, index) => (
+                  <div key={`${exercise.exerciseId}-${index}`} className="bg-gray-50 rounded-lg p-6 relative">
                     <div className="flex justify-between items-start mb-6">
                       <input
                         type="text"
@@ -327,9 +307,9 @@ export default function CreateRoutinePage() {
                   </div>
                 ))}
 
-                {exercises.length === 0 && (
+                {routineExercises.length === 0 && (
                   <p className="text-center text-gray-500 py-8">
-                    No exercises added yet. Select an exercise from the dropdown and click "Add Exercise" to get started.
+                    No exercises added yet. Select an exercise from the dropdown and click &quot;Add Exercise&quot; to get started.
                   </p>
                 )}
               </div>
@@ -340,7 +320,7 @@ export default function CreateRoutinePage() {
                 <button
                   type="submit"
                   className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  disabled={!name || exercises.length === 0}
+                  disabled={!name || routineExercises.length === 0}
                 >
                   Create Routine
                 </button>

@@ -1,17 +1,32 @@
-/**
- * Database client singleton using Prisma
- * 
- * This file sets up a singleton instance of PrismaClient to be used throughout the application.
- * It helps prevent multiple instances of PrismaClient in development environment.
- */
-import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+// Make sure this is only run on the server side to avoid 'fs' module errors
+const pool = process.env.NEXT_RUNTIME === 'nodejs'
+  ? new Pool({
+      user: 'postgres',
+      host: 'localhost',
+      database: 'gymapp',
+      password: '1212',
+      port: 5432,
+    }) 
+  : null
 
-// Use existing Prisma instance if available to prevent multiple instances during hot reloading
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+// Helper function to query the database
+export async function query(text: string, params?: any[]) {
+  if (!pool) {
+    throw new Error('Database connection not available on client side')
+  }
+  
+  try {
+    const start = Date.now()
+    const res = await pool.query(text, params)
+    const duration = Date.now() - start
+    console.log('Executed query', { text, duration, rows: res.rowCount })
+    return res
+  } catch (error) {
+    console.error('Database query error:', error)
+    throw error
+  }
+}
 
-// In development, add prisma to the global object to prevent multiple instances
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma; 
+export default pool 
