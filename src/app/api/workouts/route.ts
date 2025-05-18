@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { query } from '@/lib/db'
-import { Workout } from '@/types'
 
 // GET /api/workouts - get all workout history
 export async function GET() {

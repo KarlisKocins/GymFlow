@@ -12,7 +12,7 @@ const pool = process.env.NEXT_RUNTIME === 'nodejs'
   : null
 
 // Helper function to query the database
-export async function query(text: string, params?: any[]) {
+export async function query(text: string, params?: (string | number | boolean | Date | object)[] | undefined) {
   if (!pool) {
     throw new Error('Database connection not available on client side')
   }

@@ -61,13 +61,16 @@ export async function PUT(
     const now = new Date()
     
     const updatedFields: string[] = []
-    const values: any[] = []
+    // Explicitly type as an array that can hold our DB parameter values
+    const values: (string | number | boolean | Date | Record<string, unknown>)[] = []
     let paramCount = 1
     
     // Build dynamic update statement
     Object.entries(body).forEach(([key, value]) => {
       let dbField = key
-      let dbValue = value
+      // Using a proper type assertion for the value from JSON
+      let dbValue: string | number | boolean | Date | Record<string, unknown> = 
+        value as string | number | boolean | Record<string, unknown>
       
       // Convert camelCase to snake_case and handle special fields
       if (key === 'estimatedDuration') dbField = 'estimated_duration'
