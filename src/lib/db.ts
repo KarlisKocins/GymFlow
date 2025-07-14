@@ -1,13 +1,15 @@
+import { config } from 'dotenv'
+config()
 import { Pool } from 'pg'
 
-// Make sure this is only run on the server side to avoid 'fs' module errors
+// Use environment variables for database connection
 const pool = process.env.NEXT_RUNTIME === 'nodejs'
   ? new Pool({
-      user: 'postgres',
-      host: 'localhost',
-      database: 'gymapp',
-      password: '1212',
-      port: 5432,
+      user: process.env.PGUSER,
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASE,
+      password: process.env.PGPASSWORD,
+      port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
     }) 
   : null
 
